@@ -107,8 +107,8 @@ public class WSJWTConfig extends WebSecurityConfigurerAdapter {
 		if (publicKey.startsWith("classpath:/")) {
 			in = new ClassPathResource(publicKey.substring(11)).getInputStream();
 			return IOUtils.toString(in);
-		} else if (publicKey.startsWith("file:/")) {
-			in = new FileInputStream(publicKey);
+		} else if (publicKey.startsWith("file:///")) {
+			in = new FileInputStream(publicKey.substring(7));
 			return IOUtils.toString(in);
 		}
 		return publicKey;
