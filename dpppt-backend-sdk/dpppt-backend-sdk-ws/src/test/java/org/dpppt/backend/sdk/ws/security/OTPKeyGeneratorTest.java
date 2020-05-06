@@ -16,11 +16,13 @@ public class OTPKeyGeneratorTest {
     @Test
     public void testGenerateOneTimePassword() throws IOException, NoSuchAlgorithmException, InvalidKeyException {
         int numberOfDigits = 6;
+        boolean doublength = true;
         OTPKeyGenerator otpKeyGenerator = new OTPKeyGenerator();
-        String p = otpKeyGenerator.getOneTimePassword(numberOfDigits);
+        String p = otpKeyGenerator.getOneTimePassword("TOTP", numberOfDigits, doublength);
 
-        assertEquals(p.length(), numberOfDigits);
+        assertEquals(p.length(), numberOfDigits*2); // *2 because doublength = true
         assertTrue(isNumeric(p));
+        System.out.println(p);
     }
 
     private static boolean isNumeric(String str) {

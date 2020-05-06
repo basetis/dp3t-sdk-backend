@@ -1,11 +1,13 @@
 package org.dpppt.backend.sdk.ws.security;
 
+import com.eatthepath.otp.HmacOneTimePasswordGenerator;
 import com.eatthepath.otp.TimeBasedOneTimePasswordGenerator;
 import org.apache.commons.io.IOUtils;
 import org.dpppt.backend.sdk.ws.util.KeyHelper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.stereotype.Component;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -16,31 +18,63 @@ import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 
-@Configuration
+@Component
 public class OTPKeyGenerator {
     @Value("${ws.app.otp.seedKey}")
     String seedKey;
 
-    public String getOneTimePassword(Integer numberOfDigits) throws IOException, NoSuchAlgorithmException, InvalidKeyException {
-        final TimeBasedOneTimePasswordGenerator totp = new TimeBasedOneTimePasswordGenerator();
+    private final static String HOTP = "HOTP";
+    private final static String TOTP = "TOTP";
+
+    public String getOneTimePassword(String type, Integer numberOfDigits, boolean doubleLength) throws IOException, NoSuchAlgorithmException, InvalidKeyException{
+        if (numberOfDigits < 6 || numberOfDigits > 8) {
+            throw new IOException();
+        }
+        final TimeBasedOneTimePasswordGenerator totp = new TimeBasedOneTimePasswordGenerator(Duration.ofMinutes(5), numberOfDigits);
+        final HmacOneTimePasswordGenerator hotp = new HmacOneTimePasswordGenerator(numberOfDigits);
+
         byte[] decodedKey = Base64.getDecoder().decode(loadOTPSeedKey());
         SecretKey originalKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, totp.getAlgorithm());
 
         final Instant now = Instant.now();
         final Instant later = now.plus(totp.getTimeStep()); // TODO: Do we need a later pass?
 
-        String otp = String.format("%0"+numberOfDigits+"d",totp.generateOneTimePassword(originalKey, now));
+        int generatedOTP = 0;
+        int generatedOTPx2 = 0;
+        switch (type) {
+            case HOTP:
+                generatedOTP = totp.generateOneTimePassword(originalKey, now);
+                if (doubleLength) {
+                    generatedOTPx2 = totp.generateOneTimePassword(originalKey, now.plus(totp.getTimeStep()));
+                }
+                break;
+            case TOTP:
+                generatedOTP = hotp.generateOneTimePassword(originalKey, numberOfDigits);
+                if (doubleLength) {
+                    generatedOTPx2 = hotp.generateOneTimePassword(originalKey, numberOfDigits);
+                }
+                break;
+        }
+
+        String otp = String.format("%0"+numberOfDigits+"d", generatedOTP);
+        if (doubleLength) {
+            String otpx2 = String.format("%0"+numberOfDigits+"d", generatedOTPx2);
+            otp = otpx2 + otp;
+        }
 
         return otp;
     }
     private String loadOTPSeedKey() throws IOException {
         // Start hack
+
         if (seedKey == null) {
             seedKey = "file:///C:/Users/ruben/.ssh/dp3t/otp_seed";
         }
+
         // End hack
         if (seedKey.startsWith("keycloak:")) {
             String url = seedKey.replace("keycloak:/", "");
@@ -78,4 +112,6 @@ public class OTPKeyGenerator {
 
 
     }
+
+
 }
