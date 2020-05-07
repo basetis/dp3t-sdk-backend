@@ -72,7 +72,9 @@ public class SignatureResponseWrapperTest {
         protectedHeaders.add("X-BATCH-RELEASE-TIME");
         SignatureResponseWrapper signatureResponseWrapper = new SignatureResponseWrapper(response, keyPair, 21, protectedHeaders);
         signatureResponseWrapper.getOutputStream().print("TEST");
-        OutputStream stream = OutputStream.nullOutputStream();
+        
+        // OutputStream stream = OutputStream.nullOutputStream(); doesn't exist for Java 8
+        OutputStream stream = new OutputStream() { @Override public void write(int b) { } };
         signatureResponseWrapper.outputData(stream);
         String digest = response.getHeader("Digest");
         String rawJWT = response.getHeader("Signature");
@@ -112,7 +114,8 @@ public class SignatureResponseWrapperTest {
         protectedHeaders.add("X-BATCH-RELEASE-TIME");
         SignatureResponseWrapper signatureResponseWrapper = new SignatureResponseWrapper(response, keyPair, 21, protectedHeaders);
         signatureResponseWrapper.getOutputStream().print("TEST");
-        OutputStream stream = OutputStream.nullOutputStream();
+     // OutputStream stream = OutputStream.nullOutputStream(); doesn't exist for Java 8
+        OutputStream stream = new OutputStream() { @Override public void write(int b) { } };
         signatureResponseWrapper.outputData(stream);
         String digest = response.getHeader("Digest");
         String rawJWT = response.getHeader("Signature");
