@@ -4,10 +4,7 @@ import com.eatthepath.otp.HmacOneTimePasswordGenerator;
 import com.eatthepath.otp.TimeBasedOneTimePasswordGenerator;
 import org.apache.commons.io.IOUtils;
 import org.dpppt.backend.sdk.ws.util.KeyHelper;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.stereotype.Component;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -22,10 +19,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 
-@Component
+
 public class OTPKeyGenerator {
-    @Value("${ws.app.otp.seedKey}")
-    String seedKey;
+	
+	private String seedKey = "file:///C:\\Users\\josevincente.marin\\Documents\\Projects\\Dp3t\\certificate\\seedKey";
+
 
     private final static String HOTP = "HOTP";
     private final static String TOTP = "TOTP";
@@ -68,17 +66,13 @@ public class OTPKeyGenerator {
             String otpx2 = String.format("%0"+numberOfDigits+"d", generatedOTPx2);
             otp = otpx2 + otp;
         }
+        
+        OTPManager.getInstance().setPassword(otp);
 
         return otp;
     }
     private String loadOTPSeedKey() throws IOException {
-        // Start hack
 
-        if (seedKey == null) {
-            seedKey = "file:///C:/Users/ruben/.ssh/dp3t/otp_seed";
-        }
-
-        // End hack
         if (seedKey.startsWith("keycloak:")) {
             String url = seedKey.replace("keycloak:/", "");
             return KeyHelper.getPublicKeyFromKeycloak(url);
@@ -112,7 +106,6 @@ public class OTPKeyGenerator {
         }
         String encodedKey = Base64.getEncoder().encodeToString(key.getEncoded());
         System.out.println(encodedKey);
-
 
     }
 

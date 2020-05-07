@@ -12,6 +12,7 @@ package org.dpppt.backend.sdk.ws.controller;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
+import java.security.InvalidParameterException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
@@ -31,6 +32,7 @@ import org.dpppt.backend.sdk.data.EtagGeneratorInterface;
 import org.dpppt.backend.sdk.model.*;
 import org.dpppt.backend.sdk.model.proto.Exposed;
 import org.dpppt.backend.sdk.ws.security.OTPKeyGenerator;
+import org.dpppt.backend.sdk.ws.security.OTPManager;
 import org.dpppt.backend.sdk.ws.security.ValidateRequest;
 import org.dpppt.backend.sdk.ws.security.ValidateRequest.InvalidDateException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,8 +97,21 @@ public class DPPPTController {
 	@GetMapping(value = "/otp/{numberOfDigits}")
 	public @ResponseBody ResponseEntity<String> getOTP(@PathVariable Integer numberOfDigits) throws NoSuchAlgorithmException, InvalidKeyException, IOException {
 		OTPKeyGenerator otpKeyGenerator = new OTPKeyGenerator();
-		String otp = otpKeyGenerator.getOneTimePassword("HOTP", numberOfDigits, true);
+		String otp = otpKeyGenerator.getOneTimePassword("TOTP", numberOfDigits, true);
 		return ResponseEntity.ok().header("X-OTP", otp).body("Your OTP is...");
+	}
+	
+	@CrossOrigin(origins = { "https://editor.swagger.io" })
+	@GetMapping(value = "/validateOTP/{otpValue}")
+	public @ResponseBody ResponseEntity<String> validateOTPValue(@PathVariable String otpValue) throws NoSuchAlgorithmException, InvalidKeyException, IOException {
+		String msg = "Your OTP is correct + " + otpValue;
+		try {
+			OTPManager.getInstance().checkPassword(otpValue);
+		}catch(InvalidParameterException e) {
+			msg = e.getMessage();
+		}
+		
+		return ResponseEntity.ok().body(msg);
 	}
 
 	@CrossOrigin(origins = { "https://editor.swagger.io" })
