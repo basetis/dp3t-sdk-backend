@@ -42,11 +42,11 @@ public class TestingCloudDevConfig  extends WSCloudBaseConfig{
     
 	@Override
     String getPrivateKey() {
-        return new String(Base64.getDecoder().decode(privateKey));
+        return new String(Base64.getDecoder().decode(privateKey.replaceAll("\\s", "")));
     }
     @Override
     String getPublicKey() {
-        return new String(Base64.getDecoder().decode(publicKey));
+        return new String(Base64.getDecoder().decode(publicKey.replaceAll("\\s", "")));
     }
 
 	@Bean

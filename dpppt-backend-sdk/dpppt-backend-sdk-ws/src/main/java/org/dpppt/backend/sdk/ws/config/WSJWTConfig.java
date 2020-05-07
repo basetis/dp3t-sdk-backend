@@ -75,7 +75,8 @@ public class WSJWTConfig extends WebSecurityConfigurerAdapter {
 
 	@Bean
 	public JwtDecoder jwtDecoder() throws InvalidKeySpecException, NoSuchAlgorithmException, IOException {
-		X509EncodedKeySpec keySpecX509 = new X509EncodedKeySpec(Base64.getDecoder().decode(loadPublicKey()));
+		byte[] keyData = Base64.getDecoder().decode(loadPublicKey().replaceAll("\\s", ""));
+		X509EncodedKeySpec keySpecX509 = new X509EncodedKeySpec(keyData);
 		KeyFactory kf = KeyFactory.getInstance("RSA");
 		RSAPublicKey pubKey = (RSAPublicKey) kf.generatePublic(keySpecX509);
 		NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withPublicKey(pubKey).build();

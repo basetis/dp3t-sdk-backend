@@ -70,7 +70,7 @@ public abstract class BaseControllerTest {
 	private void loadPrivateKey() throws Exception {
 		InputStream inputStream = new ClassPathResource("generated_private.pem").getInputStream();
 		String key = IOUtils.toString(inputStream);
-		PKCS8EncodedKeySpec keySpecX509 = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(key));
+		PKCS8EncodedKeySpec keySpecX509 = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(key.replaceAll("\\s", ""))));
 		KeyFactory kf = KeyFactory.getInstance("RSA");
 		privateKey = (PrivateKey) kf.generatePrivate(keySpecX509);
 	}

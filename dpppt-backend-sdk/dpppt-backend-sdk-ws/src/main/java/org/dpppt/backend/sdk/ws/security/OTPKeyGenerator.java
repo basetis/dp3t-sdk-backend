@@ -33,7 +33,7 @@ public class OTPKeyGenerator {
             throw new IOException();
         }
 
-        byte[] decodedKey = Base64.getDecoder().decode(loadOTPSeedKey());
+        byte[] decodedKey = Base64.getDecoder().decode(loadOTPSeedKey().replaceAll("\\s", ""));
 
         final Instant now = Instant.now();
 
