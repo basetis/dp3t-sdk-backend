@@ -34,25 +34,28 @@ public class OTPKeyGenerator {
         if (numberOfDigits < 6 || numberOfDigits > 8) {
             throw new IOException();
         }
-        final TimeBasedOneTimePasswordGenerator totp = new TimeBasedOneTimePasswordGenerator(Duration.ofMinutes(5), numberOfDigits);
-        final HmacOneTimePasswordGenerator hotp = new HmacOneTimePasswordGenerator(numberOfDigits);
 
         byte[] decodedKey = Base64.getDecoder().decode(loadOTPSeedKey());
-        SecretKey originalKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, totp.getAlgorithm());
 
         final Instant now = Instant.now();
-        final Instant later = now.plus(totp.getTimeStep()); // TODO: Do we need a later pass?
 
         int generatedOTP = 0;
         int generatedOTPx2 = 0;
+        SecretKey originalKey = null;
         switch (type) {
-            case HOTP:
+            case TOTP:
+                final TimeBasedOneTimePasswordGenerator totp = new TimeBasedOneTimePasswordGenerator(Duration.ofMillis(1));
+                final Instant later = now.plus(totp.getTimeStep()); // TODO: Do we need a later pass?
+
+                originalKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, totp.getAlgorithm());
                 generatedOTP = totp.generateOneTimePassword(originalKey, now);
                 if (doubleLength) {
                     generatedOTPx2 = totp.generateOneTimePassword(originalKey, now.plus(totp.getTimeStep()));
                 }
                 break;
-            case TOTP:
+            case HOTP:
+                final HmacOneTimePasswordGenerator hotp = new HmacOneTimePasswordGenerator(numberOfDigits);
+                originalKey = new SecretKeySpec(decodedKey, 0, decodedKey.length, hotp.getAlgorithm());
                 generatedOTP = hotp.generateOneTimePassword(originalKey, numberOfDigits);
                 if (doubleLength) {
                     generatedOTPx2 = hotp.generateOneTimePassword(originalKey, numberOfDigits);
