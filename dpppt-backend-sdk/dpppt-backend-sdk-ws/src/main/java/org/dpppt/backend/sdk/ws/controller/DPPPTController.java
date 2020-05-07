@@ -36,6 +36,7 @@ import org.dpppt.backend.sdk.ws.security.OTPManager;
 import org.dpppt.backend.sdk.ws.security.ValidateRequest;
 import org.dpppt.backend.sdk.ws.security.ValidateRequest.InvalidDateException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -74,6 +75,8 @@ public class DPPPTController {
 	@Autowired
 	private ObjectMapper jacksonObjectMapper;
 
+	@Value("${ws.app.otp.seedKey}")
+	private String seedKey;
 
 	public DPPPTController(DPPPTDataService dataService, EtagGeneratorInterface etagGenerator, String appSource,
 			int exposedListCacheControl, ValidateRequest validateRequest, long batchLength, int retentionDays, long requestTime) {
@@ -96,7 +99,7 @@ public class DPPPTController {
 	@CrossOrigin(origins = { "https://editor.swagger.io" })
 	@GetMapping(value = "/otp/{numberOfDigits}")
 	public @ResponseBody ResponseEntity<String> getOTP(@PathVariable Integer numberOfDigits) throws NoSuchAlgorithmException, InvalidKeyException, IOException {
-		OTPKeyGenerator otpKeyGenerator = new OTPKeyGenerator();
+		OTPKeyGenerator otpKeyGenerator = new OTPKeyGenerator(seedKey);
 		String otp = otpKeyGenerator.getOneTimePassword("TOTP", numberOfDigits, true);
 		return ResponseEntity.ok().header("X-OTP", otp).body("Your OTP is...");
 	}

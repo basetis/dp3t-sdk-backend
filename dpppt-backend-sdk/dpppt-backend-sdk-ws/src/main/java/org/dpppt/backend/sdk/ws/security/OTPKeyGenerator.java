@@ -21,9 +21,12 @@ import java.util.Base64;
 
 
 public class OTPKeyGenerator {
-	
-	private String seedKey = "file:///C:\\Users\\josevincente.marin\\Documents\\Projects\\Dp3t\\certificate\\seedKey";
 
+	private String seedKey;
+
+    public OTPKeyGenerator(String seedKey) {
+        this.seedKey = seedKey;
+    }
 
     private final static String HOTP = "HOTP";
     private final static String TOTP = "TOTP";
