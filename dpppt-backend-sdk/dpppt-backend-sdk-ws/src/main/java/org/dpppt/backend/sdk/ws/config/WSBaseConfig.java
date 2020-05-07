@@ -22,6 +22,7 @@ import org.dpppt.backend.sdk.data.EtagGenerator;
 import org.dpppt.backend.sdk.data.EtagGeneratorInterface;
 import org.dpppt.backend.sdk.data.JDBCDPPPTDataServiceImpl;
 import org.dpppt.backend.sdk.ws.controller.DPPPTController;
+import org.dpppt.backend.sdk.ws.controller.FrontalController;
 import org.dpppt.backend.sdk.ws.filter.ResponseWrapperFilter;
 import org.dpppt.backend.sdk.ws.security.NoValidateRequest;
 import org.dpppt.backend.sdk.ws.security.ValidateRequest;
@@ -79,6 +80,11 @@ public abstract class WSBaseConfig implements SchedulingConfigurer, WebMvcConfig
 	ValidateRequest requestValidator;
 
 	final SignatureAlgorithm algorithm = SignatureAlgorithm.ES256;
+	
+	@Bean
+	public FrontalController frontalController() {
+		return new FrontalController();
+	}
 
 	@Bean
 	public DPPPTController dppptSDKController() {
