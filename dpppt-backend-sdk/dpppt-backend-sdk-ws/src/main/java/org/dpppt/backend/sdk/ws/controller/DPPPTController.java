@@ -10,27 +10,13 @@
 
 package org.dpppt.backend.sdk.ws.controller;
 
-import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.InvalidParameterException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-
-import javax.validation.Valid;
-
-import org.apache.commons.codec.binary.Hex;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.protobuf.ByteString;
 import org.dpppt.backend.sdk.data.DPPPTDataService;
 import org.dpppt.backend.sdk.data.EtagGeneratorInterface;
 import org.dpppt.backend.sdk.model.*;
 import org.dpppt.backend.sdk.model.proto.Exposed;
+import org.dpppt.backend.sdk.ws.security.JWTGenerator;
 import org.dpppt.backend.sdk.ws.security.OTPKeyGenerator;
 import org.dpppt.backend.sdk.ws.security.OTPManager;
 import org.dpppt.backend.sdk.ws.security.ValidateRequest;
@@ -38,25 +24,27 @@ import org.dpppt.backend.sdk.ws.security.ValidateRequest.InvalidDateException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.CacheControl;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.WebRequest;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.protobuf.ByteString;
+import javax.validation.Valid;
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.InvalidParameterException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
 
 @Controller
 @RequestMapping("/v1")
@@ -78,6 +66,9 @@ public class DPPPTController {
 	@Value("${ws.app.otp.seedKey}")
 	private String seedKey;
 
+	@Value("${ws.app.jwt.privatekey}")
+	private String jwtPrivate;
+
 	public DPPPTController(DPPPTDataService dataService, EtagGeneratorInterface etagGenerator, String appSource,
 			int exposedListCacheControl, ValidateRequest validateRequest, long batchLength, int retentionDays, long requestTime) {
 		this.dataService = dataService;
@@ -98,24 +89,32 @@ public class DPPPTController {
 
 	@CrossOrigin(origins = { "https://editor.swagger.io" })
 	@GetMapping(value = "/otp/{numberOfDigits}")
-	public @ResponseBody ResponseEntity<String> getOTP(@PathVariable Integer numberOfDigits) throws NoSuchAlgorithmException, InvalidKeyException, IOException {
+	public @ResponseBody ResponseEntity<String> getOTP(@PathVariable Integer numberOfDigits) throws NoSuchAlgorithmException, InvalidKeyException, IOException, InvalidKeySpecException {
 		OTPKeyGenerator otpKeyGenerator = new OTPKeyGenerator(seedKey);
 		String otp = otpKeyGenerator.getOneTimePassword("TOTP", numberOfDigits, true);
-		return ResponseEntity.ok().header("X-OTP", otp).body("Your OTP is...");
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("X-OTP", otp);
+
+		return ResponseEntity.ok().headers(headers).body("Your OTP is...");
 	}
 	
 	@CrossOrigin(origins = { "https://editor.swagger.io" })
-	@GetMapping(value = "/validateOTP/{otpValue}")
-	public @ResponseBody ResponseEntity<String> validateOTPValue(@PathVariable String otpValue) throws NoSuchAlgorithmException, InvalidKeyException, IOException {
-		String msg = "Your OTP is correct + " + otpValue;
+	@GetMapping(value = "/onset/{authorizationCode}/{fake}")
+	public @ResponseBody ResponseEntity<OnSetResponse> onSet(@PathVariable String authorizationCode, @PathVariable Integer fake)  {
+		OnSetResponse onSetResponse = new OnSetResponse();
 		try {
-			OTPManager.getInstance().checkPassword(otpValue);
-		}catch(InvalidParameterException e) {
-			msg = e.getMessage();
+			OTPManager.getInstance().checkPassword(authorizationCode);
+			JWTGenerator jwtGenerator = new JWTGenerator(jwtPrivate);
+			OffsetDateTime expiresAt = OffsetDateTime.now().withOffsetSameInstant(ZoneOffset.UTC).plusYears(1);
+			String jwtToken = jwtGenerator.createToken(expiresAt, fake);
+			onSetResponse.setAccessToken(jwtToken);
+		} catch(InvalidParameterException | IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
+			onSetResponse.setError(e.getMessage());
 		}
-		
-		return ResponseEntity.ok().body(msg);
+		onSetResponse.setFake(fake);
+		return ResponseEntity.ok().body(onSetResponse);
 	}
+
 
 	@CrossOrigin(origins = { "https://editor.swagger.io" })
 	@PostMapping(value = "/exposed")

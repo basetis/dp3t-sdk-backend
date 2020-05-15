@@ -10,9 +10,13 @@
 
 package org.dpppt.backend.sdk.ws.util;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 
+import org.apache.commons.io.IOUtils;
 import org.dpppt.backend.sdk.model.keycloak.KeyCloakPublicKey;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,5 +35,14 @@ public class KeyHelper {
 		URL jsonUrl = new URL(url);
 		KeyCloakPublicKey publicKey = objectMapper.readValue(jsonUrl, KeyCloakPublicKey.class);
 		return publicKey.getPublicKey();
+	}
+
+	public static String getKeyFromFile(String path) throws IOException {
+		InputStream in = null;
+		if (path.startsWith("file:///")) {
+			in = new FileInputStream(path.substring("file:///".length()));
+			return IOUtils.toString(in);
+		}
+		return "";
 	}
 }
