@@ -99,9 +99,24 @@ public class DPPPTController {
 	}
 	
 	@CrossOrigin(origins = { "https://editor.swagger.io" })
-	@GetMapping(value = "/onset/{authorizationCode}/{fake}")
-	public @ResponseBody ResponseEntity<OnSetResponse> onSet(@PathVariable String authorizationCode, @PathVariable Integer fake)  {
+	@GetMapping(value = "/onset/{authorizationCode}/{fake}/{validationType}")
+	public @ResponseBody ResponseEntity<OnSetResponse> onSet(@PathVariable String authorizationCode, @PathVariable Integer fake, @PathVariable String validationType)  {
 		OnSetResponse onSetResponse = new OnSetResponse();
+		if (validationType == null || validationType.isEmpty()) {
+			onSetResponse.setError("Invalid validationType");
+			return new ResponseEntity<>(onSetResponse, HttpStatus.BAD_REQUEST);
+		}
+		switch (validationType) {
+			case "OTP":
+				return otpOnSet(authorizationCode, fake, onSetResponse);
+			case "VOTTUN":
+				return vottunOnSet(authorizationCode, fake, onSetResponse);
+			default:
+				onSetResponse.setError("Invalid validationType");
+				return new ResponseEntity<>(onSetResponse, HttpStatus.BAD_REQUEST);
+		}
+	}
+	private ResponseEntity<OnSetResponse> otpOnSet(@PathVariable String authorizationCode, @PathVariable Integer fake, OnSetResponse onSetResponse) {
 		try {
 			OTPManager.getInstance().checkPassword(authorizationCode);
 			JWTGenerator jwtGenerator = new JWTGenerator(jwtPrivate);
@@ -115,6 +130,10 @@ public class DPPPTController {
 		return ResponseEntity.ok().body(onSetResponse);
 	}
 
+	private ResponseEntity<OnSetResponse> vottunOnSet(@PathVariable String authorizationCode, @PathVariable Integer fake, OnSetResponse onSetResponse) {
+		onSetResponse.setError("Not Implemented");
+		return ResponseEntity.ok().body(onSetResponse);
+	}
 
 	@CrossOrigin(origins = { "https://editor.swagger.io" })
 	@PostMapping(value = "/exposed")
