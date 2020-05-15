@@ -37,12 +37,12 @@ public class KeyHelper {
 		return publicKey.getPublicKey();
 	}
 
-	public static String getKeyFromFile(String path) throws IOException {
+	public static String getKey(String key) throws IOException {
 		InputStream in = null;
-		if (path.startsWith("file:///")) {
-			in = new FileInputStream(path.substring("file:///".length()));
+		if (key.startsWith("file:///")) {
+			in = new FileInputStream(key.substring("file:///".length()));
 			return IOUtils.toString(in);
 		}
-		return "";
+		return key;
 	}
 }

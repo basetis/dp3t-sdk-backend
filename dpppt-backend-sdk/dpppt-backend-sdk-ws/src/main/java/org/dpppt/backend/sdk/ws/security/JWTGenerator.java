@@ -21,10 +21,10 @@ import java.util.Date;
 import java.util.UUID;
 
 public class JWTGenerator {
-    private String privateKeyPath;
+    private String privateKey;
 
-    public  JWTGenerator(String privateKeyPath) {
-        this.privateKeyPath = privateKeyPath;
+    public  JWTGenerator(String privateKey) {
+        this.privateKey = privateKey;
     }
 
     public String createToken(OffsetDateTime expiresAt, Integer fake) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
@@ -35,7 +35,7 @@ public class JWTGenerator {
         claims.put("onset", String.valueOf(now.toLocalDate()));
         claims.put("fake", String.valueOf(fake));
 
-        String key = KeyHelper.getKeyFromFile(this.privateKeyPath);
+        String key = KeyHelper.getKey(this.privateKey);
         PKCS8EncodedKeySpec keySpecX509 = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(key.replaceAll("\\s", "")));
         KeyFactory kf = KeyFactory.getInstance("RSA");
         PrivateKey privateKey = kf.generatePrivate(keySpecX509);
