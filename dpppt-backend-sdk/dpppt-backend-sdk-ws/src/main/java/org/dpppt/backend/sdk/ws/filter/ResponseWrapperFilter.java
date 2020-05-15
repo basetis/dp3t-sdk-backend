@@ -49,10 +49,14 @@ public class ResponseWrapperFilter implements Filter {
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
 			throws IOException, ServletException {
 		HttpServletRequest httpRequest = (HttpServletRequest) request;
-		HttpServletResponse httpResponse = (HttpServletResponse) response;
-		SignatureResponseWrapper wrapper = new SignatureResponseWrapper(httpResponse, pair, retentionDays, protectedHeaders);
-		chain.doFilter(request, wrapper);
-		wrapper.outputData(httpResponse.getOutputStream());
+		if(httpRequest.getRequestURI()!=null && !httpRequest.getRequestURI().contains("admin")) {
+			HttpServletResponse httpResponse = (HttpServletResponse) response;
+			SignatureResponseWrapper wrapper = new SignatureResponseWrapper(httpResponse, pair, retentionDays, protectedHeaders);
+			chain.doFilter(request, wrapper);
+			wrapper.outputData(httpResponse.getOutputStream());
+		}else {
+			chain.doFilter(request, response);
+		}
 	}
 
 }

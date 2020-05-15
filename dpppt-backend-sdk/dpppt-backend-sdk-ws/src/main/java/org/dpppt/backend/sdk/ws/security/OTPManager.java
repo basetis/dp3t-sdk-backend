@@ -44,7 +44,7 @@ public class OTPManager {
 		password.setUsed(true);
 		password.setAttempts(password.getAttempts()+1);
 		// Expired time 30min
-		if((password.getCreationMils()+1*60000)<System.currentTimeMillis()) {
+		if((password.getCreationMils()+30*60000)<System.currentTimeMillis()) {
 			throw new InvalidParameterException("Password expired");
 		}
 		

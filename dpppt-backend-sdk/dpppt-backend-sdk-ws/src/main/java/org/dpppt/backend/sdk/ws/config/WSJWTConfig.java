@@ -63,6 +63,7 @@ public class WSJWTConfig extends WebSecurityConfigurerAdapter {
 		http.cors()
         .and()
           .authorizeRequests()
+			.antMatchers("/","/js/**","/css/**").permitAll()
             .antMatchers(HttpMethod.POST, "/v1/exposed")
             .authenticated()
             .anyRequest()
