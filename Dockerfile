@@ -19,10 +19,10 @@ RUN mkdir -p /home/ws/bin && \
     mkdir -p /home/ws/log && \
     mkdir -p /home/ws/tmp
 
+RUN chown -R ws:ws /home/ws
+
 # Copy binary
 COPY --from=builder /app/dpppt-backend-sdk-ws/target/dpppt-backend-sdk-ws-1.0.0-SNAPSHOT.jar /home/ws/bin/dpppt-backend-sdk-ws.jar
-
-RUN chown -R ws:ws /home/ws
 
 # Access to webinterface
 EXPOSE 8080
