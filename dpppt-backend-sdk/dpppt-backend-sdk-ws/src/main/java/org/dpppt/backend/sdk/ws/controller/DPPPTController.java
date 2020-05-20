@@ -21,6 +21,7 @@ import org.dpppt.backend.sdk.ws.security.OTPKeyGenerator;
 import org.dpppt.backend.sdk.ws.security.OTPManager;
 import org.dpppt.backend.sdk.ws.security.ValidateRequest;
 import org.dpppt.backend.sdk.ws.security.ValidateRequest.InvalidDateException;
+import org.dpppt.backend.sdk.ws.util.ValidationTypeEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.CacheControl;
@@ -43,6 +44,7 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 
@@ -105,36 +107,28 @@ public class DPPPTController {
 	@GetMapping(value = "/onset/{authorizationCode}/{fake}/{validationType}")
 	public @ResponseBody ResponseEntity<OnSetResponse> onSet(@PathVariable String authorizationCode, @PathVariable Integer fake, @PathVariable String validationType)  {
 		OnSetResponse onSetResponse = new OnSetResponse();
-		if (validationType == null || validationType.isEmpty()) {
+		
+		ValidationTypeEnum validValidationType = validateValidationType(validationType);
+		
+		if (validValidationType==null) {
 			onSetResponse.setError("Invalid validationType");
 			return new ResponseEntity<>(onSetResponse, HttpStatus.BAD_REQUEST);
 		}
-		switch (validationType) {
-			case "OTP":
-				return otpOnSet(authorizationCode, fake, onSetResponse);
-			case "VOTTUN":
-				return vottunOnSet(authorizationCode, fake, onSetResponse);
+
+		switch (validValidationType) {
+			case OTP:
+				onSetResponse = otpOnSet(authorizationCode, fake);
+				break;
+			case VOTTUN:
+				onSetResponse = vottunOnSet(authorizationCode, fake);
+				break;
+			case ALL:
+				onSetResponse = validateAll(authorizationCode, fake);
+				break;
 			default:
 				onSetResponse.setError("Invalid validationType");
 				return new ResponseEntity<>(onSetResponse, HttpStatus.BAD_REQUEST);
 		}
-	}
-	private ResponseEntity<OnSetResponse> otpOnSet(@PathVariable String authorizationCode, @PathVariable Integer fake, OnSetResponse onSetResponse) {
-		try {
-			OTPManager.getInstance().checkPassword(authorizationCode, expiredTime);
-			JWTGenerator jwtGenerator = new JWTGenerator(jwtPrivate);
-			OffsetDateTime expiresAt = OffsetDateTime.now().withOffsetSameInstant(ZoneOffset.UTC).plusYears(1);
-			String jwtToken = jwtGenerator.createToken(expiresAt, fake);
-			onSetResponse.setAccessToken(jwtToken);
-		} catch(InvalidParameterException | IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
-			onSetResponse.setError(e.getMessage());
-		}
-		onSetResponse.setFake(fake);
-		return ResponseEntity.ok().body(onSetResponse);
-	}
-
-	private ResponseEntity<OnSetResponse> vottunOnSet(@PathVariable String authorizationCode, @PathVariable Integer fake, OnSetResponse onSetResponse) {
-		onSetResponse.setError("Not Implemented");
 		return ResponseEntity.ok().body(onSetResponse);
 	}
 
@@ -268,6 +262,57 @@ public class DPPPTController {
 		} catch (Exception e) {
 			return false;
 		}
+	}
+	
+	private OnSetResponse otpOnSet(String authorizationCode, Integer fake) {
+		
+		OnSetResponse onSetResponse = new OnSetResponse();
+		
+		try {
+			OTPManager.getInstance().checkPassword(authorizationCode, expiredTime);
+			JWTGenerator jwtGenerator = new JWTGenerator(jwtPrivate);
+			OffsetDateTime expiresAt = OffsetDateTime.now().withOffsetSameInstant(ZoneOffset.UTC).plusYears(1);
+			String jwtToken = jwtGenerator.createToken(expiresAt, fake);
+			onSetResponse.setAccessToken(jwtToken);
+		} catch(InvalidParameterException | IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
+			onSetResponse.setError(e.getMessage());
+		}
+		onSetResponse.setFake(fake);
+		return onSetResponse;
+	}
+
+	private OnSetResponse vottunOnSet(String authorizationCode, Integer fake) {
+		
+		OnSetResponse onSetResponse = new OnSetResponse();
+		onSetResponse.setError("Not Implemented");
+		return onSetResponse;
+	}
+	
+	private OnSetResponse validateAll(String authorizationCode, Integer fake) {
+		
+		OnSetResponse otpMethod = otpOnSet(authorizationCode, fake);
+		if(otpMethod.getError()!=null && !otpMethod.getError().isEmpty()) {
+			return otpMethod;
+		}
+		
+		OnSetResponse vottunMethod = vottunOnSet(authorizationCode, fake);
+		if(vottunMethod.getError()!=null && !vottunMethod.getError().isEmpty()) {
+			return vottunMethod;
+		}
+		
+		return otpMethod;
+	}
+	
+	private ValidationTypeEnum validateValidationType(String validationType) {
+		
+		if(validationType==null || validationType.isEmpty()) {
+			return null;
+		}
+		
+		return Arrays.stream(ValidationTypeEnum.values())
+		.filter(v -> v.name().equals(validationType))
+		.findFirst().orElse(null);
+		
 	}
 
 }
