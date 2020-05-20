@@ -68,6 +68,9 @@ public class DPPPTController {
 
 	@Value("${ws.app.jwt.privatekey}")
 	private String jwtPrivate;
+	
+	@Value("${otp.min.expiration:1440}")
+	private long expiredTime;
 
 	public DPPPTController(DPPPTDataService dataService, EtagGeneratorInterface etagGenerator, String appSource,
 			int exposedListCacheControl, ValidateRequest validateRequest, long batchLength, int retentionDays, long requestTime) {
@@ -118,7 +121,7 @@ public class DPPPTController {
 	}
 	private ResponseEntity<OnSetResponse> otpOnSet(@PathVariable String authorizationCode, @PathVariable Integer fake, OnSetResponse onSetResponse) {
 		try {
-			OTPManager.getInstance().checkPassword(authorizationCode);
+			OTPManager.getInstance().checkPassword(authorizationCode, expiredTime);
 			JWTGenerator jwtGenerator = new JWTGenerator(jwtPrivate);
 			OffsetDateTime expiresAt = OffsetDateTime.now().withOffsetSameInstant(ZoneOffset.UTC).plusYears(1);
 			String jwtToken = jwtGenerator.createToken(expiresAt, fake);

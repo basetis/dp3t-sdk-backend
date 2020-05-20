@@ -27,15 +27,15 @@ public class OTPManager {
 		map.put(password, new OTPPassConfiguration(password));
 	}
 	
-	public void checkPassword(String password) {
+	public void checkPassword(String password, long expireTime) {
 		if(map.containsKey(password)) {
-			validatePassword(map.get(password));
+			validatePassword(map.get(password), expireTime);
 		}else {
 			throw new InvalidParameterException("Incorrect Password");
 		}
 	}
 	
-	private void validatePassword(OTPPassConfiguration password) {
+	private void validatePassword(OTPPassConfiguration password, long expireTime) {
 		
 		if(password.isUsed()) {
 			throw new InvalidParameterException("Password already used");
@@ -43,8 +43,8 @@ public class OTPManager {
 		
 		password.setUsed(true);
 		password.setAttempts(password.getAttempts()+1);
-		// Expired time 30min
-		if((password.getCreationMils()+30*60000)<System.currentTimeMillis()) {
+		long expiredMilsTime = expireTime*60000;
+		if((password.getCreationMils()+expiredMilsTime)<System.currentTimeMillis()) {
 			throw new InvalidParameterException("Password expired");
 		}
 		
