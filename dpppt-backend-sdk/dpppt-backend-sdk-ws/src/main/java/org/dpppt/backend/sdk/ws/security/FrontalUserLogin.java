@@ -1,6 +1,6 @@
-package org.dpppt.backend.sdk.ws.controller;
+package org.dpppt.backend.sdk.ws.security;
 
-public class UserLogin {
+public class FrontalUserLogin {
 
 	private String username = "";
 	

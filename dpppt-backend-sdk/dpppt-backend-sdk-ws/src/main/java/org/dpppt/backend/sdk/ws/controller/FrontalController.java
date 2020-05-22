@@ -1,12 +1,13 @@
 package org.dpppt.backend.sdk.ws.controller;
 
 
-import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-
+import org.dpppt.backend.sdk.ws.security.FrontalResponseLogin;
+import org.dpppt.backend.sdk.ws.security.FrontalSecurityService;
+import org.dpppt.backend.sdk.ws.security.FrontalUserLogin;
 import org.dpppt.backend.sdk.ws.security.OTPKeyGenerator;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,52 +22,66 @@ public class FrontalController {
 
 	@Value("${ws.app.otp.seedKey}")
 	private String seedKey;
+	
+	@Autowired
+	FrontalSecurityService frontalService;
+	
 
 	@GetMapping("login")
 	public String sendToLogin(Model model) {
-		model.addAttribute("userLogin", new UserLogin());
+		
+		model.addAttribute("userLogin", new FrontalUserLogin());
 		return "login";
 	}
 	
-	@PostMapping("index")
-	public ModelAndView sendToIndex(@ModelAttribute UserLogin userLogin, Model model) {
-		if(userLogin.getUsername().isEmpty()) {
-			return new ModelAndView("login").addObject("userLogin", new UserLogin()).addObject("error", "Empty Username");
-		}
-		if(userLogin.getPassword().isEmpty()) {
-			return new ModelAndView("login").addObject("userLogin", new UserLogin()).addObject("error", "Empty Password");
-		}
-		if(!userLogin.getUsername().equals("admin")) {
-			return new ModelAndView("login").addObject("userLogin", new UserLogin()).addObject("error", "Invalid login");
-		}
-		if(!userLogin.getPassword().equals("admin")) {
-			return new ModelAndView("login").addObject("userLogin", new UserLogin()).addObject("error", "Invalid login");
-		}
+	@PostMapping("login")
+	public ModelAndView doLogin(@ModelAttribute FrontalUserLogin userLogin, Model model){
+
+		FrontalResponseLogin response = frontalService.validateUser(userLogin);
 		
-		model.addAttribute("userLogin", userLogin);
-		return new ModelAndView("index");
+		if(response.getToken()==null || response.getToken().isEmpty()) {
+			return new ModelAndView("login")
+					.addObject("response", response)
+					.addObject("userLogin", new FrontalUserLogin());
+		}
+		System.out.println("Generated token..." + response.getToken());
+		return new ModelAndView("landing").addObject("response", response);
+		
 	}
 	
-	@GetMapping("generate-code")
-	public String sendToGeneratedCode(Model model) {
-
-		OTPKeyGenerator otpKeyGenerator = new OTPKeyGenerator(seedKey);
-		String otp = "Error generating code";
-		try {
-			otp = otpKeyGenerator.getOneTimePassword("TOTP", 6, true);
-		} catch (InvalidKeyException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+	
+	@PostMapping("generate-code")
+	public ResponseEntity<FrontalResponseLogin> sendToGeneratedCode() {
 		
-		model.addAttribute("code", otp);
-		return "generated-code";
+		FrontalResponseLogin response = new FrontalResponseLogin();
+		try {
+			response.setToken(frontalService.generateJWTToken());
+			OTPKeyGenerator otpKeyGenerator = new OTPKeyGenerator(seedKey);
+			String otp = otpKeyGenerator.getOneTimePassword("TOTP", 6, true);
+			response.setOtp(otp);
+		} catch (Exception e) {
+			e.printStackTrace();
+			response.setError("Error generating code");
+		} 
+
+		return ResponseEntity.ok().body(response);
+	}
+	
+	@PostMapping("generate-password")
+	public ResponseEntity<FrontalResponseLogin> generatePassword(String password) {
+		
+		FrontalResponseLogin response = new FrontalResponseLogin();
+		
+		try {
+			response.setToken(frontalService.generateJWTToken());
+			String pass = frontalService.generatePassword(password);
+			response.setPassword(pass);
+		} catch (Exception e) {
+			e.printStackTrace();
+			response.setError("Error generating code");
+		} 
+
+		return ResponseEntity.ok().body(response);
 	}
 
 }

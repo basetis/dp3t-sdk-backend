@@ -63,9 +63,9 @@ public class WSJWTConfig extends WebSecurityConfigurerAdapter {
 		http.cors()
         .and()
           .authorizeRequests()
-			.antMatchers("/","/js/**","/css/**").permitAll()
             .antMatchers(HttpMethod.POST, "/v1/exposed")
             .authenticated()
+            .antMatchers(HttpMethod.POST, "/admin/generate-code").authenticated()
             .anyRequest()
 			.permitAll()
         .and()
@@ -73,6 +73,7 @@ public class WSJWTConfig extends WebSecurityConfigurerAdapter {
           .jwt();
 	// @formatter:on
 	}
+
 
 	@Bean
 	public JwtDecoder jwtDecoder() throws InvalidKeySpecException, NoSuchAlgorithmException, IOException {

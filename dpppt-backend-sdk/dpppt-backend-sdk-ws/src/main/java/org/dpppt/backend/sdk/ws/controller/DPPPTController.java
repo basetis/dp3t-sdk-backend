@@ -290,16 +290,12 @@ public class DPPPTController {
 	
 	private OnSetResponse validateAll(String authorizationCode, Integer fake) {
 		
-		OnSetResponse otpMethod = otpOnSet(authorizationCode, fake);
-		if(otpMethod.getError()!=null && !otpMethod.getError().isEmpty()) {
-			return otpMethod;
-		}
-		
 		OnSetResponse vottunMethod = vottunOnSet(authorizationCode, fake);
-		if(vottunMethod.getError()!=null && !vottunMethod.getError().isEmpty()) {
+		if(vottunMethod.getError()==null || vottunMethod.getError().isEmpty()) {
 			return vottunMethod;
 		}
 		
+		OnSetResponse otpMethod = otpOnSet(authorizationCode, fake);
 		return otpMethod;
 	}
 	

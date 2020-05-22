@@ -24,6 +24,7 @@ import org.dpppt.backend.sdk.data.JDBCDPPPTDataServiceImpl;
 import org.dpppt.backend.sdk.ws.controller.DPPPTController;
 import org.dpppt.backend.sdk.ws.controller.FrontalController;
 import org.dpppt.backend.sdk.ws.filter.ResponseWrapperFilter;
+import org.dpppt.backend.sdk.ws.security.FrontalSecurityService;
 import org.dpppt.backend.sdk.ws.security.NoValidateRequest;
 import org.dpppt.backend.sdk.ws.security.ValidateRequest;
 import org.flywaydb.core.Flyway;
@@ -85,6 +86,11 @@ public abstract class WSBaseConfig implements SchedulingConfigurer, WebMvcConfig
 	@Bean
 	public FrontalController frontalController() {
 		return new FrontalController();
+	}
+	
+	@Bean
+	public FrontalSecurityService frontalSecurityService() {
+		return new FrontalSecurityService();
 	}
 
 	@Bean
