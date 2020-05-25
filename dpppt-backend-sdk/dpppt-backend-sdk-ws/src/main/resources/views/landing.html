@@ -3,35 +3,26 @@
 <head th:replace="templates/global :: head" />
 <body>
 
+	<form id="logout-form" action="#" th:action="@{/admin/login}" method="get">
+			<input type="submit" class="btn btn-danger" value="Logout">
+	</form>
 	<div class="px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center ">
-      <h1 class="h1 mb-1">Covid code generator</h1>
+      <h1 class="h1 mb-1">Covid Code Generator</h1>
+    </div>
+    <div>
     </div>
     
     <div class="card-deck mb-3 text-center border border-light p-5">
         <div class="card mb-4 box-shadow">
           <div class="card-header">
-            <h4 class="h4 mb-4">Password Generator</h4>
-          </div>
-          <div class="card-body">
-          	<form class="text-center border border-light p-5" id="pwd-form" action="#" th:action="@{/admin/generate-password}" method="post">
-            	<input id="auth-token" type="hidden" th:value="${response.token}">
-            	<input type="text" id="psw" class="form-control mb-4" >
-            	<button type="button" class="btn btn-info btn-block my-4" th:onclick="submitPwdGenerator()">Generate Password</button>
-            	<input id="pwdCode" type="text" class="form-control mb-4" th:value="${response.password}" th:readonly="true">
-            </form>
-          </div>
-        </div>
-        <div class="card mb-4 box-shadow">
-          <div class="card-header">
-            <h4 class="h4 mb-4">OTP Generator</h4>
+            <h4 class="h4 mb-4">Covid Code Generator</h4>
           </div>
           <div class="card-body">
       		<form class="text-center border border-light p-5" id="otp-form" action="#" th:action="@{/admin/generate-code}" method="post">
             	<input id="auth-token" type="hidden" th:value="${response.token}">
-            	<button type="button" class="btn btn-info btn-block my-4" th:onclick="submitOTPGenerator()">Generate OTP</button>
-            	<input id="otpCode" type="text" class="form-control mb-4" th:value="${response.otp}" th:readonly="true">
+            	<button type="button" class="btn btn-info form-control my-4" th:onclick="submitOTPGenerator()">Generate Code</button>
+            	<input id="otpCode" type="text" class="form-control text-center" th:readonly="true">
             </form>
-            
           </div>
         </div>
       </div>

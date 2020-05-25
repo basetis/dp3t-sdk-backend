@@ -63,7 +63,7 @@ public class FrontalSecurityService {
 	}
 	
 
-	public String generatePassword(String password) throws Exception {
+	private String generatePassword(String password) throws Exception {
 		
 		MessageDigest digest = MessageDigest.getInstance("SHA-256");
 		byte[] encodedhash = digest.digest(

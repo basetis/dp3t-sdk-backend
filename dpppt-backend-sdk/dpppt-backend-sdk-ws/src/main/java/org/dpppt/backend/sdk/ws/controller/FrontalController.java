@@ -44,7 +44,6 @@ public class FrontalController {
 					.addObject("response", response)
 					.addObject("userLogin", new FrontalUserLogin());
 		}
-		System.out.println("Generated token..." + response.getToken());
 		return new ModelAndView("landing").addObject("response", response);
 		
 	}
@@ -59,23 +58,6 @@ public class FrontalController {
 			OTPKeyGenerator otpKeyGenerator = new OTPKeyGenerator(seedKey);
 			String otp = otpKeyGenerator.getOneTimePassword("TOTP", 6, true);
 			response.setOtp(otp);
-		} catch (Exception e) {
-			e.printStackTrace();
-			response.setError("Error generating code");
-		} 
-
-		return ResponseEntity.ok().body(response);
-	}
-	
-	@PostMapping("generate-password")
-	public ResponseEntity<FrontalResponseLogin> generatePassword(String password) {
-		
-		FrontalResponseLogin response = new FrontalResponseLogin();
-		
-		try {
-			response.setToken(frontalService.generateJWTToken());
-			String pass = frontalService.generatePassword(password);
-			response.setPassword(pass);
 		} catch (Exception e) {
 			e.printStackTrace();
 			response.setError("Error generating code");

@@ -17,33 +17,10 @@ function submitOTPGenerator(){
 	
 	  request.done(function(response) {
 		  $("#auth-token").val(response.token);
-		  $("#otpCode").val(response.otp);
-      });
-
-      request.fail(function(jqXHR, textStatus) {
-    	  $("#auth-token").val(token);
-      });
-      
-}
-
-function submitPwdGenerator(){
-	var frm=$( "#pwd-form" );
-	var token=$("#auth-token").val();
-	var psw=$("#psw").val();
-	
-	var request = $.ajax({
-        url: frm.prop("action"),    
-        method: frm.prop('method'), 
-        headers: {
-            'Authorization':token,
-        },
-        data: {password:psw},
-        dataType: "json"
-    });
-	
-	  request.done(function(response) {
-		  $("#auth-token").val(response.token);
-		  $("#pwdCode").val(response.password);
+		  
+		  var otpCode = response.otp.match(/\d{1,3}/g);
+		  var otpToShow = otpCode[0].concat('.').concat(otpCode[1]).concat('.').concat(otpCode[2]).concat('.').concat(otpCode[3])
+		  $("#otpCode").val(otpToShow);
       });
 
       request.fail(function(jqXHR, textStatus) {

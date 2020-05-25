@@ -1,25 +1,24 @@
 <html xmlns:th="http://www.thymeleaf.org"
 	xmlns="http://www.w3.org/1999/xhtml">
 <head th:replace="templates/global :: head" />
-<body class="text-center">
+<body>
 
-	<div th:if="${error}">
-                    <div class="alert alert-danger">
-                        <span th:text="${error}"/>
+	<div th:if="${response}">
+                    <div class="text-center alert alert-danger">
+                        <span th:text="${response.error}"/>
                     </div>
-         </div>
+    </div>
 	<form class="text-center border border-light p-5" id="login-form" action="#" th:action="@{/admin/login}" th:object="${userLogin}" method="post">
 		<p class="h4 mb-4">Sign in</p>
-		<label for="inputEmail" class="sr-only">Email address</label> 
-		<input type="text" id="username" class="form-control mb-4"
+		<label for="inputEmail" class="sr-only">Username</label> 
+		<input type="text" id="username" class="form-control mb-4" width="48"
                            th:field="*{username}"
                            placeholder="Username" required="" autofocus="">
 		<label for="inputPassword" class="sr-only">Password</label> 
 		<input
 			type="password" id="inputPassword" class="form-control mb-4"
 			placeholder="Password" required="" th:field="*{password}">
-		<button class="btn btn-info btn-block my-4" type="submit" th:onclick="submitLoginForm()">Sign
-			in</button>
+		<input type="submit" class="btn btn-info form-control my-4" value="Sign in"/>
 	</form>
 
 	<th:block th:replace="templates/global :: scripts"/>

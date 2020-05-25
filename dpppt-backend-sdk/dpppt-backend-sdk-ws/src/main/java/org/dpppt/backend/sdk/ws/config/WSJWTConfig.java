@@ -19,6 +19,7 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
+import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.dpppt.backend.sdk.data.DPPPTDataService;
@@ -35,6 +36,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -66,6 +68,7 @@ public class WSJWTConfig extends WebSecurityConfigurerAdapter {
             .antMatchers(HttpMethod.POST, "/v1/exposed")
             .authenticated()
             .antMatchers(HttpMethod.POST, "/admin/generate-code").authenticated()
+            .antMatchers(HttpMethod.POST, "/admin/generate-password").authenticated()
             .anyRequest()
 			.permitAll()
         .and()
