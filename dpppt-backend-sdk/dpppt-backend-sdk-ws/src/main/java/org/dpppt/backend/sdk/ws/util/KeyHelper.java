@@ -11,10 +11,17 @@
 package org.dpppt.backend.sdk.ws.util;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.KeyFactory;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 
 import org.apache.commons.io.IOUtils;
 import org.dpppt.backend.sdk.model.keycloak.KeyCloakPublicKey;
@@ -44,5 +51,37 @@ public class KeyHelper {
 			return IOUtils.toString(in);
 		}
 		return key;
+	}
+	
+	public static PublicKey getPublickKey(String publicKey) throws Exception{
+		
+		byte[] readBytes = null;
+		
+		if(publicKey.startsWith("file:///")) {
+			readBytes = Files.readAllBytes(Paths.get(publicKey.substring("file:///".length())));
+		}else {
+			readBytes = publicKey.getBytes();	
+		}
+		
+		byte[] keyBytes = Base64.getDecoder().decode(readBytes);
+		X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
+		KeyFactory kf = KeyFactory.getInstance("RSA");	    
+		return kf.generatePublic(spec);
+	}
+	
+	public static PrivateKey getPrivateKey(String privateKey) throws Exception{
+		
+		byte[] readBytes = null;
+		
+		if(privateKey.startsWith("file:///")) {
+			readBytes = Files.readAllBytes(Paths.get(privateKey.substring("file:///".length())));
+		}else {
+			readBytes = privateKey.getBytes();	
+		}
+		
+		byte[] keyBytes = Base64.getDecoder().decode(readBytes);
+		PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
+		KeyFactory kf = KeyFactory.getInstance("RSA");	    
+		return kf.generatePrivate(spec);
 	}
 }

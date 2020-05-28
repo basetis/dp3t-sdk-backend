@@ -10,13 +10,11 @@
 
 package org.dpppt.backend.sdk.ws.config;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.hubspot.jackson.datatype.protobuf.ProtobufModule;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
+import java.security.KeyPair;
+import java.util.List;
+
+import javax.sql.DataSource;
+
 import org.dpppt.backend.sdk.data.DPPPTDataService;
 import org.dpppt.backend.sdk.data.EtagGenerator;
 import org.dpppt.backend.sdk.data.EtagGeneratorInterface;
@@ -27,6 +25,7 @@ import org.dpppt.backend.sdk.ws.filter.ResponseWrapperFilter;
 import org.dpppt.backend.sdk.ws.security.FrontalSecurityService;
 import org.dpppt.backend.sdk.ws.security.NoValidateRequest;
 import org.dpppt.backend.sdk.ws.security.ValidateRequest;
+import org.dpppt.backend.sdk.ws.util.KeyHelper;
 import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,9 +43,13 @@ import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import javax.sql.DataSource;
-import java.security.KeyPair;
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.hubspot.jackson.datatype.protobuf.ProtobufModule;
+
+import io.jsonwebtoken.SignatureAlgorithm;
 
 @Configuration
 @EnableScheduling
@@ -77,6 +80,12 @@ public abstract class WSBaseConfig implements SchedulingConfigurer, WebMvcConfig
 
 	@Value("${ws.app.source}")
 	String appSource;
+	
+	@Value("${ws.app.response.publickey}")
+	String responsePublicKey;
+	
+	@Value("${ws.app.response.privatekey}")
+	String responsePrivateKey;
 
 	@Autowired(required = false)
 	ValidateRequest requestValidator;
@@ -128,13 +137,13 @@ public abstract class WSBaseConfig implements SchedulingConfigurer, WebMvcConfig
 	}
 
 	@Bean
-	public ResponseWrapperFilter hashFilter() {
+	public ResponseWrapperFilter hashFilter() throws Exception{
 		return new ResponseWrapperFilter(getKeyPair(algorithm), retentionDays, protectedHeaders);
 	}
 
-	public KeyPair getKeyPair(SignatureAlgorithm algorithm) {
+	public KeyPair getKeyPair(SignatureAlgorithm algorithm) throws Exception{
 		logger.warn("USING FALLBACK KEYPAIR. WONT'T PERSIST APP RESTART AND PROBABLY DOES NOT HAVE ENOUGH ENTROPY.");
-		return Keys.keyPairFor(algorithm);
+		return new KeyPair(KeyHelper.getPublickKey(responsePublicKey), KeyHelper.getPrivateKey(responsePrivateKey));
 	}
 
 	@Override
