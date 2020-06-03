@@ -21,6 +21,7 @@ import org.dpppt.backend.sdk.ws.security.OTPKeyGenerator;
 import org.dpppt.backend.sdk.ws.security.OTPManager;
 import org.dpppt.backend.sdk.ws.security.ValidateRequest;
 import org.dpppt.backend.sdk.ws.security.ValidateRequest.InvalidDateException;
+import org.dpppt.backend.sdk.ws.util.KeyHelper;
 import org.dpppt.backend.sdk.ws.util.ValidationTypeEnum;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -270,7 +271,8 @@ public class DPPPTController {
 		
 		try {
 			OTPManager.getInstance().checkPassword(authorizationCode, expiredTime);
-			JWTGenerator jwtGenerator = new JWTGenerator(jwtPrivate);
+			// FIXME: perform getPrivateKey once, at WSBaseConfig, don't read key on every request
+			JWTGenerator jwtGenerator = new JWTGenerator(KeyHelper.getPrivateKey(jwtPrivate));
 			OffsetDateTime expiresAt = OffsetDateTime.now().withOffsetSameInstant(ZoneOffset.UTC).plusYears(1);
 			String jwtToken = jwtGenerator.createToken(expiresAt, fake);
 			onSetResponse.setAccessToken(jwtToken);

@@ -17,14 +17,16 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.X509EncodedKeySpec;
+import java.security.interfaces.RSAPrivateCrtKey;
+import java.security.spec.*;
 import java.util.Base64;
 
 import org.apache.commons.io.IOUtils;
 import org.dpppt.backend.sdk.model.keycloak.KeyCloakPublicKey;
+import org.springframework.core.io.ClassPathResource;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -49,39 +51,40 @@ public class KeyHelper {
 		if (key.startsWith("file:///")) {
 			in = new FileInputStream(key.substring("file:///".length()));
 			return IOUtils.toString(in);
+		} else if (key.startsWith("classpath:/")) {
+			in = new ClassPathResource(key.substring(11)).getInputStream();
+			return IOUtils.toString(in);
 		}
 		return key;
 	}
 	
-	public static PublicKey getPublickKey(String publicKey) throws Exception{
-		
-		byte[] readBytes = null;
-		
-		if(publicKey.startsWith("file:///")) {
-			readBytes = Files.readAllBytes(Paths.get(publicKey.substring("file:///".length())));
-		}else {
-			readBytes = publicKey.getBytes();	
+	public static PublicKey getPublickKey(String publicKey) throws InvalidKeySpecException, NoSuchAlgorithmException, IOException {
+		String read;
+		if (publicKey.startsWith("keycloak:")) {
+			String url = publicKey.replace("keycloak:/", "");
+			read = getPublicKeyFromKeycloak(url);
+		} else {
+			read = getKey(publicKey);
 		}
-		
-		byte[] keyBytes = Base64.getDecoder().decode(readBytes);
+
+		byte[] keyBytes = Base64.getDecoder().decode(read.replaceAll("\\s", ""));
 		X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
-		KeyFactory kf = KeyFactory.getInstance("RSA");	    
+		KeyFactory kf = KeyFactory.getInstance("RSA");
 		return kf.generatePublic(spec);
 	}
 	
-	public static PrivateKey getPrivateKey(String privateKey) throws Exception{
-		
-		byte[] readBytes = null;
-		
-		if(privateKey.startsWith("file:///")) {
-			readBytes = Files.readAllBytes(Paths.get(privateKey.substring("file:///".length())));
-		}else {
-			readBytes = privateKey.getBytes();	
-		}
-		
-		byte[] keyBytes = Base64.getDecoder().decode(readBytes);
+	public static PrivateKey getPrivateKey(String privateKey) throws InvalidKeySpecException, NoSuchAlgorithmException, IOException {
+		String read = getKey(privateKey);
+		byte[] keyBytes = Base64.getDecoder().decode(read.replaceAll("\\s", ""));
 		PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
-		KeyFactory kf = KeyFactory.getInstance("RSA");	    
+		KeyFactory kf = KeyFactory.getInstance("RSA");
 		return kf.generatePrivate(spec);
+	}
+
+	public static PublicKey extractPublicKey(PrivateKey key) throws InvalidKeySpecException, NoSuchAlgorithmException {
+		RSAPrivateCrtKey rsaKey = (RSAPrivateCrtKey) key;
+		KeySpec spec = new RSAPublicKeySpec(rsaKey.getModulus(), rsaKey.getPublicExponent());
+		KeyFactory kf = KeyFactory.getInstance("RSA");
+		return kf.generatePublic(spec);
 	}
 }
