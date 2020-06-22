@@ -11,6 +11,7 @@
 package org.dpppt.backend.sdk.ws.config;
 
 import java.security.KeyPair;
+import java.security.PrivateKey;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -81,9 +82,6 @@ public abstract class WSBaseConfig implements SchedulingConfigurer, WebMvcConfig
 	@Value("${ws.app.source}")
 	String appSource;
 	
-	@Value("${ws.app.response.publickey}")
-	String responsePublicKey;
-	
 	@Value("${ws.app.response.privatekey}")
 	String responsePrivateKey;
 
@@ -142,8 +140,8 @@ public abstract class WSBaseConfig implements SchedulingConfigurer, WebMvcConfig
 	}
 
 	public KeyPair getKeyPair(SignatureAlgorithm algorithm) throws Exception{
-		logger.warn("USING FALLBACK KEYPAIR. WONT'T PERSIST APP RESTART AND PROBABLY DOES NOT HAVE ENOUGH ENTROPY.");
-		return new KeyPair(KeyHelper.getPublickKey(responsePublicKey), KeyHelper.getPrivateKey(responsePrivateKey));
+		PrivateKey key = KeyHelper.getPrivateKey(responsePrivateKey);
+		return new KeyPair(KeyHelper.extractPublicKey(key), key);
 	}
 
 	@Override

@@ -7,6 +7,8 @@ import java.time.ZoneOffset;
 import java.util.Base64;
 import java.util.Map;
 
+import org.dpppt.backend.sdk.ws.util.KeyHelper;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -77,7 +79,8 @@ public class FrontalSecurityService {
 	
 	public String generateJWTToken() throws Exception{
 		
-		JWTGenerator jwtGenerator = new JWTGenerator(jwtPrivate);
+		// FIXME: perform getPrivateKey once, at WSBaseConfig, don't read key on every request
+		JWTGenerator jwtGenerator = new JWTGenerator(KeyHelper.getPrivateKey(jwtPrivate));
 		OffsetDateTime expiresAt = OffsetDateTime.now().withOffsetSameInstant(ZoneOffset.UTC).plusMinutes(60);
 		String jwtToken = jwtGenerator.createToken(expiresAt, 0);
 		

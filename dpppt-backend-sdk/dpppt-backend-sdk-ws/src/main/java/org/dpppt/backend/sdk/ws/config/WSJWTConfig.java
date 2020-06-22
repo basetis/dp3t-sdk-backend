@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
@@ -34,7 +35,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -52,8 +52,8 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 @Profile(value = "jwt")
 public class WSJWTConfig extends WebSecurityConfigurerAdapter {
 
-	@Value("${ws.app.jwt.publickey}")
-	String publicKey;
+	@Value("${ws.app.jwt.privatekey}")
+	String privateKey;
 
 	@Autowired
 	@Lazy
@@ -80,10 +80,8 @@ public class WSJWTConfig extends WebSecurityConfigurerAdapter {
 
 	@Bean
 	public JwtDecoder jwtDecoder() throws InvalidKeySpecException, NoSuchAlgorithmException, IOException {
-		byte[] keyData = Base64.getDecoder().decode(loadPublicKey().replaceAll("\\s", ""));
-		X509EncodedKeySpec keySpecX509 = new X509EncodedKeySpec(keyData);
-		KeyFactory kf = KeyFactory.getInstance("RSA");
-		RSAPublicKey pubKey = (RSAPublicKey) kf.generatePublic(keySpecX509);
+		PrivateKey key = KeyHelper.getPrivateKey(privateKey);
+		RSAPublicKey pubKey = (RSAPublicKey) KeyHelper.extractPublicKey(key);
 		NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withPublicKey(pubKey).build();
 		jwtDecoder.setClaimSetConverter(claimConverter());
 
@@ -107,20 +105,4 @@ public class WSJWTConfig extends WebSecurityConfigurerAdapter {
 		return new JWTClaimSetConverter();
 	}
 
-	private String loadPublicKey() throws IOException {
-		if (publicKey.startsWith("keycloak:")) {
-			String url = publicKey.replace("keycloak:/", "");
-			return KeyHelper.getPublicKeyFromKeycloak(url);
-		}
-
-		InputStream in = null;
-		if (publicKey.startsWith("classpath:/")) {
-			in = new ClassPathResource(publicKey.substring(11)).getInputStream();
-			return IOUtils.toString(in);
-		} else if (publicKey.startsWith("file:///")) {
-			in = new FileInputStream(publicKey.substring("file:///".length()));
-			return IOUtils.toString(in);
-		}
-		return publicKey;
-	}
 }

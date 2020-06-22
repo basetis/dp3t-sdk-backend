@@ -21,9 +21,9 @@ import java.util.Date;
 import java.util.UUID;
 
 public class JWTGenerator {
-    private String privateKey;
+    private PrivateKey privateKey;
 
-    public  JWTGenerator(String privateKey) {
+    public JWTGenerator(PrivateKey privateKey) {
         this.privateKey = privateKey;
     }
 
@@ -35,13 +35,8 @@ public class JWTGenerator {
         claims.put("onset", String.valueOf(now.toLocalDate()));
         claims.put("fake", String.valueOf(fake));
 
-        String key = KeyHelper.getKey(this.privateKey);
-        PKCS8EncodedKeySpec keySpecX509 = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(key.replaceAll("\\s", "")));
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-        PrivateKey privateKey = kf.generatePrivate(keySpecX509);
-
         return Jwts.builder().setClaims(claims).setId(UUID.randomUUID().toString())
                 .setSubject("test-subject" + OffsetDateTime.now().withOffsetSameInstant(ZoneOffset.UTC).toString()).setExpiration(Date.from(expiresAt.toInstant()))
-                .setIssuedAt(Date.from(OffsetDateTime.now().withOffsetSameInstant(ZoneOffset.UTC).toInstant())).signWith(privateKey).compact();
+                .setIssuedAt(Date.from(OffsetDateTime.now().withOffsetSameInstant(ZoneOffset.UTC).toInstant())).signWith(this.privateKey).compact();
     }
 }
