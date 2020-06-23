@@ -37,6 +37,7 @@ import org.springframework.util.Base64Utils;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 
 public class SignatureResponseWrapper extends HttpServletResponseWrapper {
 
@@ -138,7 +139,7 @@ public class SignatureResponseWrapper extends HttpServletResponseWrapper {
 				claims.setExpiration(Date.from(issueDate.plusDays(retentionPeriod).toInstant()));
 			}
 		}
-		String signature = Jwts.builder().setClaims(claims).signWith(pair.getPrivate()).compact();
+		String signature = Jwts.builder().setClaims(claims).signWith(pair.getPrivate(),SignatureAlgorithm.ES256).compact();
 
 		this.setHeader(HEADER_DIGEST, "sha-256=" + Hex.encodeHexString(theHash));
 		this.setHeader(HEADER_PUBLIC_KEY, getPublicKeyAsPEM());

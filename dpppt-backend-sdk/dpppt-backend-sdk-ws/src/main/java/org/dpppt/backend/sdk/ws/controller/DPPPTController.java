@@ -12,6 +12,7 @@ package org.dpppt.backend.sdk.ws.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
+
 import org.dpppt.backend.sdk.data.DPPPTDataService;
 import org.dpppt.backend.sdk.data.EtagGeneratorInterface;
 import org.dpppt.backend.sdk.model.*;
@@ -92,6 +93,7 @@ public class DPPPTController {
 	public @ResponseBody ResponseEntity<String> hello() {
 		return ResponseEntity.ok().header("X-HELLO", "dp3t").body("Hello from DP3T WS");
 	}
+	
 
 	@CrossOrigin(origins = { "https://editor.swagger.io" })
 	@GetMapping(value = "/otp/{numberOfDigits}")

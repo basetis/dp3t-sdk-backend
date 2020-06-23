@@ -13,20 +13,27 @@ package org.dpppt.backend.sdk.ws.util;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.security.KeyFactory;
+import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.interfaces.RSAPrivateCrtKey;
-import java.security.spec.*;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.RSAPublicKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
 import org.apache.commons.io.IOUtils;
+import org.bouncycastle.util.io.pem.PemObject;
+import org.bouncycastle.util.io.pem.PemReader;
 import org.dpppt.backend.sdk.model.keycloak.KeyCloakPublicKey;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.util.Base64Utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -75,7 +82,7 @@ public class KeyHelper {
 	
 	public static PrivateKey getPrivateKey(String privateKey) throws InvalidKeySpecException, NoSuchAlgorithmException, IOException {
 		String read = getKey(privateKey);
-		byte[] keyBytes = Base64.getDecoder().decode(read.replaceAll("\\s", ""));
+		byte[] keyBytes = Base64.getDecoder().decode(read);
 		PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
 		KeyFactory kf = KeyFactory.getInstance("RSA");
 		return kf.generatePrivate(spec);
@@ -87,4 +94,29 @@ public class KeyHelper {
 		KeyFactory kf = KeyFactory.getInstance("RSA");
 		return kf.generatePublic(spec);
 	}
+	
+
+	public static KeyPair getKeyPair(String privateKeyProperty, String publicKeyProperty) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+		
+		byte[] rawPrivateKey = getBytesFromPem(privateKeyProperty);
+		byte[] rawPublicKey = getBytesFromPem(publicKeyProperty);
+		
+    	KeyFactory kf = KeyFactory.getInstance("EC");
+    	PrivateKey privateKey = kf.generatePrivate(new PKCS8EncodedKeySpec(rawPrivateKey));
+    	PublicKey publicKey = kf.generatePublic(new X509EncodedKeySpec(rawPublicKey));
+
+    	return new KeyPair(publicKey, privateKey);
+	}
+	
+	private static byte[] getBytesFromPem(String key) throws IOException {
+		
+		String pemKey = getKey(key);
+		byte[] decodedPk = Base64Utils.decodeFromUrlSafeString(pemKey);
+    	StringReader reader = new StringReader(new String(decodedPk));
+    	PemReader pemReader = new PemReader(reader);
+    	PemObject pemObject = pemReader.readPemObject();
+    	pemReader.close();
+    	return pemObject.getContent();
+	}
+
 }
