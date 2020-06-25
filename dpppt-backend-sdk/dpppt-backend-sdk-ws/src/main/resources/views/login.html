@@ -2,7 +2,8 @@
 	xmlns="http://www.w3.org/1999/xhtml">
 <head th:replace="templates/global :: head" />
 <body>
-
+	
+	<div><span class="blockquote-footer" th:text="${version}"/></div>
 	<div th:if="${response}">
                     <div class="text-center alert alert-danger">
                         <span th:text="${response.error}"/>

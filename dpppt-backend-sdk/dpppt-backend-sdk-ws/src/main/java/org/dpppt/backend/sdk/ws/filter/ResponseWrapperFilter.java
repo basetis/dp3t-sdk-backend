@@ -37,7 +37,7 @@ public class ResponseWrapperFilter implements Filter {
 		return pair.getPublic();
 	}
 
-	public ResponseWrapperFilter(KeyPair pair, int retentionDays, List<String> protectedHeaders) throws IOException {
+	public ResponseWrapperFilter(KeyPair pair, int retentionDays, List<String> protectedHeaders) {
 		Security.addProvider(new BouncyCastleProvider());
 		Security.setProperty("crypto.policy", "unlimited");
 		this.pair = pair;

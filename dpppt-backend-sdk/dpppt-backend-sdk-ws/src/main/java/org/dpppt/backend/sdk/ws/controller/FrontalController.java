@@ -23,6 +23,9 @@ public class FrontalController {
 	@Value("${ws.app.otp.seedKey}")
 	private String seedKey;
 	
+	@Value("${ws.backend.version:0.2.5}")
+	private String version;
+	
 	@Autowired
 	FrontalSecurityService frontalService;
 	
@@ -31,6 +34,7 @@ public class FrontalController {
 	public String sendToLogin(Model model) {
 		
 		model.addAttribute("userLogin", new FrontalUserLogin());
+		model.addAttribute("version", version);
 		return "login";
 	}
 	
@@ -41,6 +45,7 @@ public class FrontalController {
 		
 		if(response.getToken()==null || response.getToken().isEmpty()) {
 			return new ModelAndView("login")
+					.addObject("version", version)
 					.addObject("response", response)
 					.addObject("userLogin", new FrontalUserLogin());
 		}
