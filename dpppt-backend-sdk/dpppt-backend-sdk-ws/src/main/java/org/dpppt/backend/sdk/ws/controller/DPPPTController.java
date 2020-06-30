@@ -204,11 +204,9 @@ public class DPPPTController {
 			return ResponseEntity.badRequest().build();
 		}
 		if (!isValidBatch(batchReleaseTime)) {
-			System.out.println("1");
 			return ResponseEntity.notFound().build();
 		}
 		if (batchReleaseTime < OffsetDateTime.now().withOffsetSameInstant(ZoneOffset.UTC).minusDays(retentionDays).toInstant().toEpochMilli()){
-			System.out.println("2");
 			return ResponseEntity.notFound().build();
 		}
 		int max = dataService.getMaxExposedIdForBatchReleaseTime(batchReleaseTime, batchLength);
