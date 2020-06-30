@@ -37,6 +37,7 @@ import org.springframework.web.context.request.WebRequest;
 
 import javax.validation.Valid;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.InvalidParameterException;
 import java.security.NoSuchAlgorithmException;
@@ -202,10 +203,12 @@ public class DPPPTController {
 		if (batchReleaseTime % batchLength != 0) {
 			return ResponseEntity.badRequest().build();
 		}
-		if (batchReleaseTime > OffsetDateTime.now().withOffsetSameInstant(ZoneOffset.UTC).toInstant().toEpochMilli()) {
+		if (!isValidBatch(batchReleaseTime)) {
+			System.out.println("1");
 			return ResponseEntity.notFound().build();
 		}
 		if (batchReleaseTime < OffsetDateTime.now().withOffsetSameInstant(ZoneOffset.UTC).minusDays(retentionDays).toInstant().toEpochMilli()){
+			System.out.println("2");
 			return ResponseEntity.notFound().build();
 		}
 		int max = dataService.getMaxExposedIdForBatchReleaseTime(batchReleaseTime, batchLength);
@@ -314,5 +317,17 @@ public class DPPPTController {
 		.findFirst().orElse(null);
 		
 	}
-
+	
+	private boolean isValidBatch(long batchReleaseTime) {
+		
+		long current = OffsetDateTime.now().withOffsetSameInstant(ZoneOffset.UTC).toInstant().toEpochMilli();
+		long nextBatch = current + batchLength;
+		
+		if(batchReleaseTime < nextBatch) {
+			return true;
+		}else {
+			return false;
+		}
+	}
+	
 }
