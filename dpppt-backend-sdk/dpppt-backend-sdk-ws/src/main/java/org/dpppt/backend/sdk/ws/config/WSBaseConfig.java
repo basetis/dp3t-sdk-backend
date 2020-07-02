@@ -11,6 +11,7 @@
 package org.dpppt.backend.sdk.ws.config;
 
 import java.security.KeyPair;
+import java.security.PrivateKey;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -83,9 +84,6 @@ public abstract class WSBaseConfig implements SchedulingConfigurer, WebMvcConfig
 	
 	@Value("${ws.app.response.privatekey}")
 	String responsePrivateKey;
-	
-	@Value("${ws.app.response.publickey}")
-	String responsePublicKey;
 
 	@Autowired(required = false)
 	ValidateRequest requestValidator;
@@ -142,7 +140,8 @@ public abstract class WSBaseConfig implements SchedulingConfigurer, WebMvcConfig
 	}
 
 	public KeyPair getKeyPair(SignatureAlgorithm algorithm) throws Exception{
-		return KeyHelper.getKeyPair(responsePrivateKey, responsePublicKey);
+		PrivateKey key = KeyHelper.getPrivateKey(responsePrivateKey, "EC");
+		return new KeyPair(KeyHelper.extractPublicKey(key), key);
 	}
 
 	@Override

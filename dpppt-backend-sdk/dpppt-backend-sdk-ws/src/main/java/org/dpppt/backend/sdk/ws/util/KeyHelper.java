@@ -31,6 +31,9 @@ import java.util.Base64;
 import org.apache.commons.io.IOUtils;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
+import org.bouncycastle.jce.interfaces.ECPrivateKey;
+import org.bouncycastle.jce.spec.ECParameterSpec;
+import org.bouncycastle.jce.spec.ECPublicKeySpec;
 import org.dpppt.backend.sdk.model.keycloak.KeyCloakPublicKey;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.Base64Utils;
@@ -81,42 +84,29 @@ public class KeyHelper {
 	}
 	
 	public static PrivateKey getPrivateKey(String privateKey) throws InvalidKeySpecException, NoSuchAlgorithmException, IOException {
+		return getPrivateKey(privateKey, "RSA");
+	}
+
+	public static PrivateKey getPrivateKey(String privateKey, String algorithm) throws InvalidKeySpecException, NoSuchAlgorithmException, IOException {
 		String read = getKey(privateKey);
-		byte[] keyBytes = Base64.getDecoder().decode(read);
+		byte[] keyBytes = Base64.getDecoder().decode(read.replaceAll("\\s", ""));
 		PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
-		KeyFactory kf = KeyFactory.getInstance("RSA");
+		KeyFactory kf = KeyFactory.getInstance(algorithm);
 		return kf.generatePrivate(spec);
 	}
 
 	public static PublicKey extractPublicKey(PrivateKey key) throws InvalidKeySpecException, NoSuchAlgorithmException {
-		RSAPrivateCrtKey rsaKey = (RSAPrivateCrtKey) key;
-		KeySpec spec = new RSAPublicKeySpec(rsaKey.getModulus(), rsaKey.getPublicExponent());
-		KeyFactory kf = KeyFactory.getInstance("RSA");
-		return kf.generatePublic(spec);
-	}
-	
-
-	public static KeyPair getKeyPair(String privateKeyProperty, String publicKeyProperty) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
-		
-		byte[] rawPrivateKey = getBytesFromPem(privateKeyProperty);
-		byte[] rawPublicKey = getBytesFromPem(publicKeyProperty);
-		
-    	KeyFactory kf = KeyFactory.getInstance("EC");
-    	PrivateKey privateKey = kf.generatePrivate(new PKCS8EncodedKeySpec(rawPrivateKey));
-    	PublicKey publicKey = kf.generatePublic(new X509EncodedKeySpec(rawPublicKey));
-
-    	return new KeyPair(publicKey, privateKey);
-	}
-	
-	private static byte[] getBytesFromPem(String key) throws IOException {
-		
-		String pemKey = getKey(key);
-		byte[] decodedPk = Base64Utils.decodeFromUrlSafeString(pemKey);
-    	StringReader reader = new StringReader(new String(decodedPk));
-    	PemReader pemReader = new PemReader(reader);
-    	PemObject pemObject = pemReader.readPemObject();
-    	pemReader.close();
-    	return pemObject.getContent();
+		if (key instanceof RSAPrivateCrtKey) {
+			RSAPrivateCrtKey rsaKey = (RSAPrivateCrtKey) key;
+			KeySpec spec = new RSAPublicKeySpec(rsaKey.getModulus(), rsaKey.getPublicExponent());
+			return KeyFactory.getInstance("RSA").generatePublic(spec);
+		} else if (key instanceof ECPrivateKey) {
+			ECPrivateKey ecKey = (ECPrivateKey) key;
+			ECParameterSpec params = ecKey.getParameters();
+			KeySpec spec = new ECPublicKeySpec(params.getG().multiply(ecKey.getD()), params);
+			return KeyFactory.getInstance("EC").generatePublic(spec);
+		}
+		throw new UnsupportedOperationException("Key type not implemented");
 	}
 
 }

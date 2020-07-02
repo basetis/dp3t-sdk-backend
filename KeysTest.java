@@ -25,7 +25,7 @@ public class KeysTest {
 	public static void main(String[] args) throws Exception {
 		
 		KeyPair kp = Keys.keyPairFor(SignatureAlgorithm.ES256);
-		String strPrivateKey = getPrivateKeyAsPEM(kp.getPrivate());
+		String strPrivateKey = Base64.encodeToString(kp.getPrivate().getEncoded());
 		System.out.println(strPrivateKey);
 		String privateFilePath = "C:\\Users\\josevincente.marin\\Documents\\Projects\\Dp3t\\github\\dp3t-sdk-backend\\dpppt-backend-sdk\\conf_var\\keys\\privateKey.pem";
 		FileUtils.writeStringToFile(new File(privateFilePath), strPrivateKey);
